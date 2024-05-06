@@ -7,12 +7,12 @@
 package main
 
 import (
+	"fmt"
+	"html/template"
 	"log"
 	"net/http"
 	"os"
-	"html/template"
 	"regexp"
-	"fmt"
 )
 
 var templates = template.Must(template.ParseFiles("tmpl/edit.html", "tmpl/view.html", "tmpl/frontPage.html"))
@@ -77,8 +77,9 @@ func saveHandler(w http.ResponseWriter, r *http.Request, title string) {
 func rootHandler(w http.ResponseWriter, r *http.Request, title string) {
   p, err:= loadPage(title)
   fmt.Println("helo", p)
+  fmt.Println("bye", err)
   if err != nil {
-    http.Redirect(w, r, "/frontPage/frontPage.html", http.StatusFound)
+    http.Redirect(w, r, "/frontPage/frontPage", http.StatusFound)
     return
   }
   renderTemplate(w, "frontPage", p)
@@ -95,7 +96,7 @@ func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.Handl
 }
 
 func main() {
-  http.HandleFunc("/frontPage", makeHandler(rootHandler))
+  http.HandleFunc("/frontPage/", makeHandler(rootHandler))
   http.HandleFunc("/view/", makeHandler(viewHandler))
   http.HandleFunc("/edit/", makeHandler(editHandler))
   http.HandleFunc("/save/", makeHandler(saveHandler))
