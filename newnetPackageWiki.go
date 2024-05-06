@@ -7,16 +7,17 @@
 package main
 
 import (
+	"fmt"
+	"html/template"
 	"log"
 	"net/http"
 	"os"
-	"html/template"
 	"regexp"
-	"fmt"
 )
 
 var templates = template.Must(template.ParseFiles("tmpl/edit.html", "tmpl/view.html", "tmpl/frontPage.html"))
-var validPath = regexp.MustCompile("^/(edit|save|view)/([a-zA-Z0-9]+)$")
+var validPath = regexp.MustCompile("^/(frontPage|edit|save|view)/([a-zA-Z0-9]+)$")
+
 
 type Page struct {
 	Title string
@@ -73,45 +74,29 @@ func saveHandler(w http.ResponseWriter, r *http.Request, title string) {
   http.Redirect(w, r, "/view/"+title, http.StatusFound)
 }
 
-/*func rootHandler(w http.ResponseWriter, r *http.Request, title string) {
+func rootHandler(w http.ResponseWriter, r *http.Request, title string) {
   p, err:= loadPage(title)
-  fmt.Println("helo", err)
+  fmt.Println("helo", p)
+  fmt.Println("bye", err)
   if err != nil {
-    http.Redirect(w, r, "/", http.StatusFound)
+    http.Redirect(w, r, "/frontPage/frontPage", http.StatusFound)
     return
   }
   renderTemplate(w, "frontPage", p)
 }
-*/
 
 func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.HandlerFunc {
   return func(w http.ResponseWriter, r *http.Request) {
     m := validPath.FindStringSubmatch(r.URL.Path)
-    fmt.Println(m, "mmmm")
     if m == nil {
-      /*http.NotFound(w, r)*/
-      body := r.FormValue("body")
-      p := &Page{Title: "hello", Body: []byte(body)}
-      if p == nil {
-	fmt.Println("p nil", p)
-      }
-
-      if p != nil {
-	fmt.Println("p pop", p)
-      }
-
-
-      http.Redirect(w, r, "/", http.StatusFound)
-      fmt.Println("w: ", w, "r: ", r)
-
-      renderTemplate(w, "frontPage", p)
-      /*return*/
+      http.NotFound(w, r)
     }
     fn(w, r, m[2])
   }
 }
 
 func main() {
+  http.HandleFunc("/frontPage/", makeHandler(rootHandler))
   http.HandleFunc("/view/", makeHandler(viewHandler))
   http.HandleFunc("/edit/", makeHandler(editHandler))
   http.HandleFunc("/save/", makeHandler(saveHandler))
